@@ -1,0 +1,32 @@
+### Test root endpoint
+GET http://localhost:5227/
+
+### Test loan decision endpoint
+POST http://localhost:5227/loan-decision
+Content-Type: application/json
+
+{
+  "fullName": "Flor Cavero",
+  "creditScore": 700,
+  "annualIncome": 65000
+}
+
+### Test loan decision via controller
+POST http://localhost:5227/api/loan/decision
+Content-Type: application/json
+
+{
+  "fullName": "Flor Cavero",
+  "creditScore": 710,
+  "annualIncome": 65000
+}
+
+### Test denied scenario
+POST http://localhost:5227/api/loan/decision
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "creditScore": 500,
+  "annualIncome": 25000
+}
