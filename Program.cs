@@ -44,6 +44,9 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<LoanApplicationService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RuleGroupService>();
+builder.Services.AddScoped<LoanDecisionService>();
+
+builder.Services.AddHttpClient<AIService>();
 
 builder.Services.AddOpenApi(options =>
 {

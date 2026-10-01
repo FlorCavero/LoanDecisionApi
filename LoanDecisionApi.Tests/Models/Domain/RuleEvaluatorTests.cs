@@ -69,7 +69,7 @@ public class RuleEvaluatorTests
 
         var result = RuleEvaluator.Evaluate(policy, application);
 
-        result.Passed.ShouldBeTrue();
+        result.Outcome.ShouldBe(EvaluationOutcome.Passed);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class RuleEvaluatorTests
 
         var result = RuleEvaluator.Evaluate(policy, application);
 
-        result.Passed.ShouldBeTrue();
+        result.Outcome.ShouldBe(EvaluationOutcome.Passed);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class RuleEvaluatorTests
 
         var result = RuleEvaluator.Evaluate(policy, application);
 
-        result.Passed.ShouldBeFalse();
+        result.Outcome.ShouldBe(EvaluationOutcome.Failed);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class RuleEvaluatorTests
 
         var result = RuleEvaluator.Evaluate(policy, application);
 
-        result.Passed.ShouldBeFalse();
+        result.Outcome.ShouldBe(EvaluationOutcome.Failed);
     }
 
     [Fact]
@@ -130,8 +130,111 @@ public class RuleEvaluatorTests
         var result = RuleEvaluator.Evaluate(policy, application);
 
         var highCreditPath = result.ChildResults.Single(c => c.Name == "High Credit Path");
-        highCreditPath.Passed.ShouldBeTrue();
-        highCreditPath.RuleResults.ShouldContain(r => r.DataPoint == "CreditScore" && r.Passed && r.Details.Contains("750"));
-        highCreditPath.RuleResults.ShouldContain(r => r.DataPoint == "DebtToIncomeRatio" && r.Passed && r.Details.Contains("0.36"));
+        highCreditPath.Outcome.ShouldBe(EvaluationOutcome.Passed);
+        highCreditPath.RuleResults.ShouldContain(r => r.DataPoint == "CreditScore" && r.Outcome == EvaluationOutcome.Passed && r.Details.Contains("750"));
+        highCreditPath.RuleResults.ShouldContain(r => r.DataPoint == "DebtToIncomeRatio" && r.Outcome == EvaluationOutcome.Passed && r.Details.Contains("0.36"));
+    }
+
+    [Fact]
+    public void EvaluateRule_UnknownDataPoint_IsSkippedNotFailed()
+    {
+        var group = RuleGroup.Create(new RuleGroupCreateRequest
+        {
+            Name = "Fraud Gate",
+            Grouping = RuleGrouping.And,
+            Rules = [new RuleCreateRequest { DataPoint = "IsFraudRiskFlagged", Condition = RuleCondition.Equals, Value = "false" }]
+        }).Value!;
+
+        // IsFraudRiskFlagged left as its default (null) - fraud check hasn't run yet.
+        var application = LoanApplication.CreateForTesting(creditScore: 700);
+
+        var result = RuleEvaluator.Evaluate(group, application);
+
+        result.RuleResults.Single().Outcome.ShouldBe(EvaluationOutcome.Skipped);
+        result.Outcome.ShouldBe(EvaluationOutcome.Skipped);
+    }
+
+    [Fact]
+    public void Evaluate_AndGroup_SkippedRuleDoesNotOverrideAnAlreadyFailedRule()
+    {
+        var group = RuleGroup.Create(new RuleGroupCreateRequest
+        {
+            Name = "And Gate",
+            Grouping = RuleGrouping.And,
+            Rules =
+            [
+                new RuleCreateRequest { DataPoint = "CreditScore", Condition = RuleCondition.GreaterOrEqualTo, Value = "700" }, // fails: 500 < 700
+                new RuleCreateRequest { DataPoint = "IsFraudRiskFlagged", Condition = RuleCondition.Equals, Value = "false" }   // skipped: unknown
+            ]
+        }).Value!;
+
+        var application = LoanApplication.CreateForTesting(creditScore: 500);
+
+        var result = RuleEvaluator.Evaluate(group, application);
+
+        result.Outcome.ShouldBe(EvaluationOutcome.Failed);
+    }
+
+    [Fact]
+    public void Evaluate_AndGroup_SkippedRuleMakesAnOtherwisePassingGroupIndeterminate()
+    {
+        var group = RuleGroup.Create(new RuleGroupCreateRequest
+        {
+            Name = "And Gate",
+            Grouping = RuleGrouping.And,
+            Rules =
+            [
+                new RuleCreateRequest { DataPoint = "CreditScore", Condition = RuleCondition.GreaterOrEqualTo, Value = "700" }, // passes: 750 >= 700
+                new RuleCreateRequest { DataPoint = "IsFraudRiskFlagged", Condition = RuleCondition.Equals, Value = "false" }   // skipped: unknown
+            ]
+        }).Value!;
+
+        var application = LoanApplication.CreateForTesting(creditScore: 750);
+
+        var result = RuleEvaluator.Evaluate(group, application);
+
+        result.Outcome.ShouldBe(EvaluationOutcome.Skipped);
+    }
+
+    [Fact]
+    public void Evaluate_OrGroup_SkippedRuleDoesNotOverrideAnAlreadyPassedRule()
+    {
+        var group = RuleGroup.Create(new RuleGroupCreateRequest
+        {
+            Name = "Or Gate",
+            Grouping = RuleGrouping.Or,
+            Rules =
+            [
+                new RuleCreateRequest { DataPoint = "CreditScore", Condition = RuleCondition.GreaterOrEqualTo, Value = "700" }, // passes: 750 >= 700
+                new RuleCreateRequest { DataPoint = "IsFraudRiskFlagged", Condition = RuleCondition.Equals, Value = "false" }   // skipped: unknown
+            ]
+        }).Value!;
+
+        var application = LoanApplication.CreateForTesting(creditScore: 750);
+
+        var result = RuleEvaluator.Evaluate(group, application);
+
+        result.Outcome.ShouldBe(EvaluationOutcome.Passed);
+    }
+
+    [Fact]
+    public void Evaluate_OrGroup_SkippedRuleMakesAnOtherwiseFailingGroupIndeterminate()
+    {
+        var group = RuleGroup.Create(new RuleGroupCreateRequest
+        {
+            Name = "Or Gate",
+            Grouping = RuleGrouping.Or,
+            Rules =
+            [
+                new RuleCreateRequest { DataPoint = "CreditScore", Condition = RuleCondition.GreaterOrEqualTo, Value = "700" }, // fails: 500 < 700
+                new RuleCreateRequest { DataPoint = "IsFraudRiskFlagged", Condition = RuleCondition.Equals, Value = "false" }   // skipped: unknown
+            ]
+        }).Value!;
+
+        var application = LoanApplication.CreateForTesting(creditScore: 500);
+
+        var result = RuleEvaluator.Evaluate(group, application);
+
+        result.Outcome.ShouldBe(EvaluationOutcome.Skipped);
     }
 }
