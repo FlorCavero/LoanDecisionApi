@@ -96,4 +96,11 @@ public class RuleGroup
         var group = new RuleGroup(request.Name!, request.Grouping!.Value, rules, childGroups);
         return Result<RuleGroup>.Success(group);
     }
+
+    // Test-only: lets unit tests pin down RuleGroup fields. Visible only to LoanDecisionApi.Tests via InternalsVisibleTo.
+    internal static RuleGroup CreateForTesting(string name, RuleGrouping grouping, List<Rule> rules)
+    {
+        return new RuleGroup(name, grouping, rules, []);
+    }
+
 }

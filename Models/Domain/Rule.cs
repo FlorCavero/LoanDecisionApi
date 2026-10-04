@@ -19,7 +19,7 @@ public enum RuleGrouping {
     And
 }
 
-public partial class Rule
+public class Rule
 {
     public Guid Id { get; }
     public string DataPoint { get; private set; }
@@ -126,6 +126,12 @@ public partial class Rule
 
         var rule = new Rule(request);
         return Result<Rule>.Success(rule);
+    }
+
+    // Test-only: lets unit tests pin down RuleGroup fields. Visible only to LoanDecisionApi.Tests via InternalsVisibleTo.
+    internal static Rule CreateForTesting(string dataPoint, RuleCondition condition, string v)
+    {
+        return new Rule(Guid.NewGuid(), dataPoint, condition, v);
     }
 
 }
