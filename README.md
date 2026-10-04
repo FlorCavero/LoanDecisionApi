@@ -15,7 +15,11 @@ A partner submits a loan application and it gets a fast, automated pre-screen ba
 
 ## Tech stack
 
-ASP.NET Core (.NET 10) · EF Core + Npgsql (PostgreSQL) · JWT bearer auth · ASP.NET Core Data Protection (SSN encryption at rest) · Claude API (tool use / structured output) · xUnit + Shouldly
+ASP.NET Core (.NET 10) · EF Core + Npgsql (PostgreSQL) · JWT bearer auth · ASP.NET Core Data Protection (SSN encryption at rest) · Claude API (tool use / structured output) · xUnit + Shouldly · React + TypeScript (Vite)
+
+## Web UI
+
+A small React/TypeScript frontend (`frontend/`) sits on top of the API: partner sign-in, a page to submit a new loan application, and an evaluation page built around the free-text "Text" field the AI integration reads from — submitting it shows the resulting decision and the full rule-group breakdown, rendered recursively since rule groups can nest. See [`frontend/README.md`](frontend/README.md) for how to run it.
 
 ## Testing
 
@@ -65,3 +69,5 @@ dotnet run --launch-profile http
 ```
 
 A test `ApiPartner` is seeded automatically on startup in the `Development` environment.
+
+For the web UI, see [`frontend/README.md`](frontend/README.md).

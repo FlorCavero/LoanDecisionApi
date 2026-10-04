@@ -20,6 +20,17 @@ builder.Services.AddControllers()
 
 builder.Services.AddDataProtection();
 
+// The React frontend (Vite dev server) authenticates with a Bearer token in the
+// Authorization header, not cookies, so no AllowCredentials() is needed here.
+const string FrontendDevCorsPolicy = "FrontendDev";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendDevCorsPolicy, policy =>
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 var jwtSigningKey = builder.Configuration["Jwt:SigningKey"] ?? throw new InvalidOperationException("Configuration value 'Jwt:SigningKey' is not configured.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Configuration value 'Jwt:Issuer' is not configured.");
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Configuration value 'Jwt:Audience' is not configured.");
@@ -72,6 +83,8 @@ if (app.Environment.IsDevelopment())
         }
     }
 }
+
+app.UseCors(FrontendDevCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
