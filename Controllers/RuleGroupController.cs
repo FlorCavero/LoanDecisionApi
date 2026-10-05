@@ -30,4 +30,11 @@ public class RuleGroupController(RuleGroupService ruleGroupService) : Controller
 
         return ruleGroup is null ? NotFound() : Ok(ruleGroup);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetRuleGroups()
+    {
+        var ruleGroups = await ruleGroupService.ListAsync();
+        return Ok(ruleGroups);
+    }
 }

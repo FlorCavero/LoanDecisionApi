@@ -4,6 +4,7 @@ import { Layout, RequireAuth } from "./components/Layout";
 import { LoginPage } from "./pages/LoginPage";
 import { LoanApplicationPage } from "./pages/LoanApplicationPage";
 import { ApprovalPage } from "./pages/ApprovalPage";
+import { RuleGroupsPage } from "./pages/RuleGroupsPage";
 
 function App() {
   return (
@@ -25,6 +26,14 @@ function App() {
               element={
                 <RequireAuth>
                   <ApprovalPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/rule-groups"
+              element={
+                <RequireAuth>
+                  <RuleGroupsPage />
                 </RequireAuth>
               }
             />

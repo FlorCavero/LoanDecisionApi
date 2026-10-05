@@ -69,3 +69,60 @@ export interface ApiErrorBody {
   errors?: string[];
   title?: string;
 }
+
+export type RuleGrouping = "And" | "Or";
+
+export type RuleCondition =
+  | "Equals"
+  | "DoesNotEqual"
+  | "GreaterThan"
+  | "GreaterOrEqualTo"
+  | "LessThan"
+  | "LessOrEqualTo"
+  | "In"
+  | "NotIn";
+
+// Keep in sync with Rule.cs's DataPointTypes dictionary - it's the backend's own
+// source of truth for which data points a rule can reference.
+export const DATA_POINTS = [
+  "CreditScore",
+  "AnnualIncome",
+  "RequestedAmount",
+  "MonthlyDebtPayments",
+  "DebtToIncomeRatio",
+  "DateOfBirth",
+  "DelinquencyStatus",
+  "IsIdentityVerified",
+  "IsFraudRiskFlagged",
+  "IsCreditFreezeFlagged",
+] as const;
+
+export interface RuleCreateRequest {
+  dataPoint: string;
+  condition: RuleCondition;
+  value: string;
+}
+
+export interface RuleGroupCreateRequest {
+  name: string;
+  grouping: RuleGrouping;
+  rules: RuleCreateRequest[];
+  // Nested child groups aren't buildable from this UI yet - always empty on create.
+  childGroups: [];
+}
+
+export interface RuleResponse {
+  id: string;
+  dataPoint: string;
+  condition: RuleCondition;
+  value: string;
+}
+
+export interface RuleGroupResponse {
+  id: string;
+  createdAt: string;
+  name: string;
+  grouping: RuleGrouping;
+  rules: RuleResponse[];
+  childGroups: RuleGroupResponse[];
+}

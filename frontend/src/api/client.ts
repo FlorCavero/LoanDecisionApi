@@ -5,6 +5,8 @@ import type {
   LoanApplicationResponse,
   LoanApplicationEvaluationTextRequest,
   LoanDecisionResponse,
+  RuleGroupCreateRequest,
+  RuleGroupResponse,
 } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5227";
@@ -79,4 +81,15 @@ export function evaluateLoanApplication(
     token,
     body,
   });
+}
+
+export function listRuleGroups(token: string): Promise<RuleGroupResponse[]> {
+  return request<RuleGroupResponse[]>("/api/RuleGroup", { method: "GET", token });
+}
+
+export function createRuleGroup(
+  token: string,
+  body: RuleGroupCreateRequest,
+): Promise<RuleGroupResponse> {
+  return request<RuleGroupResponse>("/api/RuleGroup", { method: "POST", token, body });
 }

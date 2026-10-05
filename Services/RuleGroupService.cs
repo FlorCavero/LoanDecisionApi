@@ -1,6 +1,7 @@
 using LoanDecisionApi.Data;
 using LoanDecisionApi.Models.Domain;
 using LoanDecisionApi.Models.DTO;
+using Microsoft.EntityFrameworkCore;
 
 namespace LoanDecisionApi.Services;
 
@@ -22,5 +23,10 @@ public class RuleGroupService(LoanDecisionDBContext dbContext)
     public async Task<RuleGroup?> GetAsync(Guid id)
     {
         return await dbContext.RuleGroups.FindAsync(id);
+    }
+
+    public async Task<List<RuleGroup>> ListAsync()
+    {
+        return await dbContext.RuleGroups.ToListAsync();
     }
 }

@@ -16,6 +16,9 @@ export function Layout() {
             <NavLink to="/evaluate" className={({ isActive }) => (isActive ? "active" : "")}>
               Evaluate
             </NavLink>
+            <NavLink to="/rule-groups" className={({ isActive }) => (isActive ? "active" : "")}>
+              Rule Groups
+            </NavLink>
           </nav>
         )}
         {isAuthenticated && (
