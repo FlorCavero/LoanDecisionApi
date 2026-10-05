@@ -135,40 +135,54 @@ export function RuleGroupsPage() {
           <div className="rule-rows">
             {rules.map((rule, index) => (
               <div className="rule-row" key={index}>
-                <select
-                  value={rule.dataPoint}
-                  onChange={(e) => updateRule(index, { dataPoint: e.target.value })}
-                >
-                  {DATA_POINTS.map((dp) => (
-                    <option key={dp} value={dp}>
-                      {dp}
-                    </option>
-                  ))}
-                </select>
+                <div className="rule-row-header">
+                  <span className="rule-row-label">Rule {index + 1}</span>
+                  {rules.length > 1 && (
+                    <button type="button" className="remove-rule" onClick={() => removeRule(index)}>
+                      Remove
+                    </button>
+                  )}
+                </div>
 
-                <select
-                  value={rule.condition}
-                  onChange={(e) => updateRule(index, { condition: e.target.value as RuleCondition })}
-                >
-                  {CONDITIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <label>
+                  Data point
+                  <select
+                    value={rule.dataPoint}
+                    onChange={(e) => updateRule(index, { dataPoint: e.target.value })}
+                  >
+                    {DATA_POINTS.map((dp) => (
+                      <option key={dp} value={dp}>
+                        {dp}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-                <input
-                  value={rule.value}
-                  onChange={(e) => updateRule(index, { value: e.target.value })}
-                  placeholder={rule.condition === "In" || rule.condition === "NotIn" ? "e.g. Current,Days30" : "e.g. 640"}
-                  required
-                />
+                <label>
+                  Condition
+                  <select
+                    value={rule.condition}
+                    onChange={(e) => updateRule(index, { condition: e.target.value as RuleCondition })}
+                  >
+                    {CONDITIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-                {rules.length > 1 && (
-                  <button type="button" className="remove-rule" onClick={() => removeRule(index)}>
-                    &times;
-                  </button>
-                )}
+                <label>
+                  Value
+                  <textarea
+                    className="rule-value"
+                    rows={2}
+                    value={rule.value}
+                    onChange={(e) => updateRule(index, { value: e.target.value })}
+                    placeholder={rule.condition === "In" || rule.condition === "NotIn" ? "e.g. Current,Days30" : "e.g. 640"}
+                    required
+                  />
+                </label>
               </div>
             ))}
           </div>
