@@ -70,16 +70,25 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+}
 
-    using var seedScope = app.Services.CreateScope();
+using (var seedScope = app.Services.CreateScope())
+{
+    const string bootstrapPartnerName = "Bootstrap-Partner";
     var seedDbContext = seedScope.ServiceProvider.GetRequiredService<LoanDecisionDBContext>();
-    if (!seedDbContext.ApiPartners.Any())
+
+    if (!seedDbContext.ApiPartners.Any(partner => partner.IsActive || partner.Name == bootstrapPartnerName))
     {
-        var seedPartner = ApiPartner.Create("test-partner", "local-dev-secret-please-change");
+        var bootstrapPartnerSecret = builder.Configuration["Bootstrap:ApiPartnerSecret"] ?? throw new InvalidOperationException("Configuration value 'Bootstrap:ApiPartnerSecret' is not configured.");
+        var seedPartner = ApiPartner.Create(bootstrapPartnerName, bootstrapPartnerSecret);
         if (seedPartner.IsSuccess)
         {
             seedDbContext.ApiPartners.Add(seedPartner.Value!);
             seedDbContext.SaveChanges();
+        }
+        else
+        {
+            throw new InvalidOperationException($"Failed to create bootstrap API partner: {string.Join(", ", seedPartner.Errors ?? [])}");
         }
     }
 }
