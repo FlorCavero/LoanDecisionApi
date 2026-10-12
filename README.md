@@ -51,7 +51,7 @@ flowchart TB
     APP -->|tool-use call| CLAUDE["Claude API"]
 ```
 
-- **App Service** runs the published API. Application settings for the JWT signing key/issuer/audience, the Anthropic API key, and the Postgres connection string are all [Key Vault references](https://learn.microsoft.com/azure/app-service/app-service-key-vault-references) (`@Microsoft.KeyVault(SecretUri=...)`) rather than plain values — resolved at runtime via the app's system-assigned managed identity, which holds only the narrow `Key Vault Secrets User` role scoped to the vault itself.
+- **App Service** runs the published API. Application settings for the JWT signing key/issuer/audience, the Anthropic API key, the Postgres connection string, and the bootstrap partner secret are all [Key Vault references](https://learn.microsoft.com/azure/app-service/app-service-key-vault-references) (`@Microsoft.KeyVault(SecretUri=...)`) rather than plain values — resolved at runtime via the app's system-assigned managed identity, which holds only the narrow `Key Vault Secrets User` role scoped to the vault itself.
 - **Key Vault** holds every secret the app needs. Nothing is duplicated into App Service's own settings in plaintext.
 - **Postgres Flexible Server** is the managed database, firewalled to Azure services plus the specific IPs that need direct access.
 - **GitHub Actions** (`.github/workflows/deploy.yml`) runs the test suite, publishes, and deploys on every push to `main`, authenticating via a federated credential trust (`AADSTS`-verified OIDC token exchange) — the deploying identity holds `Website Contributor` scoped to just this one App Service resource, not the resource group.
@@ -64,10 +64,19 @@ dotnet user-secrets set "Jwt:SigningKey" "<base64 key>"
 dotnet user-secrets set "Jwt:Issuer" "LoanDecisionApi"
 dotnet user-secrets set "Jwt:Audience" "LoanDecisionApi.Partners"
 dotnet user-secrets set "Anthropic:ApiKey" "<your key>"
+dotnet user-secrets set "Bootstrap:ApiPartnerSecret" "<at least 16 characters>"
 dotnet ef database update
 dotnet run --launch-profile http
 ```
 
-A test `ApiPartner` is seeded automatically on startup in the `Development` environment.
+On first startup against an empty database, an `ApiPartner` named `Bootstrap-Partner` is created with the secret from `Bootstrap:ApiPartnerSecret` — use those credentials with `POST /api/auth/token`.
+
+### How the first API partner is created
+
+Every API call needs a partner token, and there is no endpoint for creating partners, so the first one has to come from outside the API. On startup, in every environment, the app seeds `Bootstrap-Partner` only when **no partner is active and no partner with that name exists**. The rules that follow from this:
+
+- The secret lives only in configuration (`dotnet user-secrets` locally, Key Vault in Azure) and is stored hashed. It is never committed.
+- The secret is only read when seeding is actually needed, so an environment that already has a working partner doesn't require it.
+- A deactivated `Bootstrap-Partner` is **never recreated**. If its secret leaks, deactivating it is permanent; startup code doesn't override an operator's revocation by bringing the partner back with the same leaked secret.
 
 For the web UI, see [`frontend/README.md`](frontend/README.md).

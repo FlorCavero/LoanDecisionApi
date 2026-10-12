@@ -53,8 +53,8 @@ export function LoginPage() {
         </button>
 
         <p className="muted small">
-          Local dev default seed: <code>test-partner</code> /{" "}
-          <code>local-dev-secret-please-change</code>
+          Local dev: sign in as <code>Bootstrap-Partner</code> with your{" "}
+          <code>Bootstrap:ApiPartnerSecret</code> value.
         </p>
       </form>
     </div>
